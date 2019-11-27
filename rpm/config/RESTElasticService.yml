@@ -1,0 +1,38 @@
+---
+ElasticService:
+  ListenPort: "8016"
+  ElasticDataSource:
+    Host: "10.59.62.152"
+    Port: "9200"
+    Protocol: "http"
+    RequestTimeout: "120000"
+    MessageIndex:
+      IndexName: "/msglog-ctest*"
+      MaxResultSize: "1000"
+    LogIndex:
+      IndexName: "/srvlog-ctest*"
+      MaxResultSize: "50"
+
+PostgresDB:
+  URL: "jdbc:postgresql://10.59.62.152:5432/atr_ctest_config"
+  User: "autex"
+  Password: "autex123"
+  Platform: "postgresql"
+
+UPAFramework:
+  StatusCheck:
+    StatusFileName: "/var/tmp/restelastic_status.txt"
+    StatusFileInterval: 1000
+  Solace:
+      Topics:
+        Root: ATR
+        Environment: CTEST
+        Region: AMER
+        Application: ElasticService
+      Addresses:
+      - "10.59.62.29"
+      - "10.59.62.25"
+      Ports:
+      - '55555'
+      UserName: client3
+      MessageVPN: atr

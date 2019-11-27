@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<configuration debug="true">
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>
+                %date{ISO8601} [%p] %logger{0} %M:%L [%t] %m%n
+            </Pattern>
+        </encoder>
+    </appender>
+
+    <!--<logger name="com.thomsonreuters" level="trace" additivity="false">
+        <appender-ref ref="STDOUT" />
+    </logger>-->
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

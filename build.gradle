@@ -1,0 +1,153 @@
+version = 'DEV' //System.getenv("APP_VERSION")
+
+ext {
+    springBootVersion = '2.0.3.RELEASE'
+    frameworkVersion = '2.1.2-SNAPSHOT'
+    packageVersion = "1.0.7"
+    extPackageName = 'RESTElasticService'
+    if ( version.contains('SNAPSHOT') ) {
+        packageVersion = version.replaceAll('-SNAPSHOT', '')
+    } else {
+        packageVersion = version.replaceAll('-RC', '.RC')
+    }
+    rpmName = "${extPackageName}-${packageVersion}-1.i386.rpm"
+}
+    
+buildscript {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+        mavenCentral()
+        maven {
+            url 'https://bams-aws.refinitiv.com/artifactory/plugins-release.maven.global'
+            credentials {
+                username = 'ashwin.shenoy' //System.getenv("NEXUS_USERNAME")
+                password = 'Welcome4' //System.getenv("NEXUS_PASSWORD")
+            }
+        }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.0.3.RELEASE")
+        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.7.1'
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:4.9.3'
+    }
+}
+
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'nebula.ospackage'
+apply plugin: 'ivy-publish'
+
+group = 'com.thomsonreuters.atr'
+//version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {
+        url 'https://bams-aws.refinitiv.com/artifactory/public.maven.global'
+        credentials {
+            username = 'ashwin.shenoy' //System.getenv("NEXUS_USERNAME")
+            password = 'Welcome4' //System.getenv("NEXUS_PASSWORD")
+        }
+    }
+    mavenCentral()
+}
+artifactoryPublish {}.dependsOn(buildRpm)
+
+publishing.publications.create('yum-publication', IvyPublication) {
+    artifact "build/distributions/${rpmName}"
+}
+
+artifactory {
+    publish {
+        contextUrl = "https://bams-aws.refinitiv.com/artifactory"
+        //A closure defining publishing information
+        repository {
+            repoKey = 'default.yum.cloud/atru/rpms'   //The Artifactory repository key to publish to
+            username = 'ashwin.shenoy' //System.getenv("NEXUS_USERNAME")
+            password = 'Welcome4' //System.getenv("NEXUS_PASSWORD")
+            ivy {
+                artifactLayout = "${rpmName}"
+            }
+        }
+        defaults {
+            //List of Gradle Publications (names or objects) from which to collect the list of artifacts to be deployed to Artifactory.
+            publications ('yum-publication')
+
+            publishBuildInfo = false   //Publish build-info to Artifactory (true by default)
+            publishArtifacts = true   //Publish artifacts to Artifactory (true by default)
+            publishPom = false   //Publish generated POM files to Artifactory (true by default).
+            publishIvy = false   //Publish generated Ivy descriptor files to Artifactory (true by default).
+        }
+    }
+}
+
+task copyDeps(type: Copy) {
+    from('build/libs') {
+        exclude "*-sources.jar"
+    }
+    into rootProject.rootDir.getAbsolutePath() + "/docker/app/RESTelasticsearch/libs"
+    rename {
+        String fileName -> fileName.replace('.original', '')
+    }
+}
+
+task copyConfig(type: Copy) {
+    from(rootProject.rootDir.getAbsolutePath() + "/src/main/resources/config/RESTElasticService.yml")
+    into rootProject.rootDir.getAbsolutePath() + "/docker/app/RESTelasticsearch/config"
+    from(rootProject.rootDir.getAbsolutePath() + "/src/main/resources/logback.xml")
+    into(rootProject.rootDir.getAbsolutePath() + "/docker/app/RESTelasticsearch/config")
+}
+
+ospackage {
+    packageName = extPackageName
+    version = packageVersion
+    release = '1'
+    arch = I386
+    os = LINUX
+    user = 'docker'
+    packageGroup = 'docker'
+    permissionGroup = 'docker'
+
+    requires('java')
+
+    into "/opt/asgard/${packageName}"
+
+    from(jar.outputs.files) {
+        into 'libs'
+    }
+    from('rpm/scripts') {
+        into 'bin'
+        fileMode = 0750
+    }
+    from('rpm/config') {
+        fileType CONFIG | NOREPLACE
+        fileMode = 0750
+        into 'config'
+    }
+}
+
+buildRpm {
+    requires('java', '1.8.0', GREATER | EQUAL)
+    directory("/var/log/asgard/${extPackageName}", 0750)
+}
+
+dependencies {
+    compile('org.springframework.boot:spring-boot-starter-data-elasticsearch')
+    compile('org.springframework.boot:spring-boot-starter-web')
+    testCompile('org.springframework.boot:spring-boot-starter-test')
+    compile group: 'org.json', name: 'json', version: '20090211'
+    compile group: 'org.postgresql', name: 'postgresql', version: '42.2.1'
+    compile group: 'org.springframework', name: 'spring-jdbc', version: '5.0.3.RELEASE'
+    compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version: '1.4.0.RELEASE'
+    compile group: 'com.thomsonreuters.atr', name: 'fdm', version: '2.1.4-RC4'
+    compile group: 'com.thomsonreuters.atr', name: 'framework', version: '2.1.4-RC4'
+    compile group: 'io.springfox', name: 'springfox-swagger2', version: '2.6.1'
+    compile group: 'io.springfox', name: 'springfox-swagger-ui', version: '2.6.1'
+}

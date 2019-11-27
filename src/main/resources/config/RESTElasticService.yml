@@ -1,0 +1,34 @@
+---
+ElasticService:
+  ListenPort: "8016"
+  ElasticDataSource:
+    Host: "vpc-atr-dev-76u4zommjpkv7ocf5ws6bxtqye.us-east-1.es.amazonaws.com"
+    Port: "443"
+    Protocol: "https"
+    RequestTimeout: "120000"
+    MessageIndex:
+      IndexName: "/msglog-dev*"
+      MaxResultSize: "1000"
+    LogIndex:
+      IndexName: "/srvlog-dev*"
+      MaxResultSize: "50"
+
+PostgresDB:
+  URL: "jdbc:postgresql://atr-config-preprod-cluster.cluster-c6mxreiwpdjf.us-east-1.rds.amazonaws.com:5432/atrdev"
+  User: "autex"
+  Password: "autex123"
+  Platform: "postgresql"
+
+UPAFramework:
+  Solace:
+      Topics:
+        Root: ATR
+        Environment: DEV
+        Region: US
+        Application: ElasticService
+      Addresses:
+      - 10.97.55.107
+      Ports:
+      - '55555'
+      UserName: client3
+      MessageVPN: default

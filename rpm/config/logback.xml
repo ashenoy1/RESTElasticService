@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <property name="LOG_HOME" value= "/var/log/asgard/RESTelasticsearch" />
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_HOME}/RESTElasticsearch.log</file>
+        <append>true</append>
+        <!--<immediateFlush>true</immediateFlush>-->
+        <encoder>
+            <pattern>%-7d{yyyy-MM-dd HH:mm:ss:SSS} [%p] %C %M\(\):%L [%t] %m%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="FILE" />
+    </root>
+</configuration>
